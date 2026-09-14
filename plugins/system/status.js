@@ -1,17 +1,23 @@
 import cfg from "../../lib/config/config.js"
 import PluginsLoader from "../../lib/plugins/loader.js"
 import moment from "moment"
+import fs from "node:fs/promises"
 
 export class status extends plugin {
   constructor() {
     super({
       name: "状态统计",
-      dsc: "#状态",
+      dsc: "#云崽状态",
       event: "message",
       rule: [
         {
-          reg: "^#(状态|统计)",
+          reg: "^#云崽(状态|统计)",
           fnc: "status",
+        },
+        {
+          reg: "^#清空错误日志$",
+          fnc: "clearErrorLog",
+          permission: "master",
         },
       ],
     })
@@ -37,6 +43,17 @@ export class status extends plugin {
     return this.reply(Bot.makeForwardArray([msg, this.pluginTime()]))
   }
 
+  async clearErrorLog() {
+    try {
+      await fs.writeFile("logs/error.log", "")
+      logger.mark("错误日志已清空")
+      return this.reply("错误日志已清空")
+    } catch (err) {
+      logger.error(`清空错误日志失败：${err.message}`)
+      return this.reply(`清空错误日志失败：${err.message}`)
+    }
+  }
+
   botTime() {
     let msg = "账号在线时长"
     for (const i of Bot.uin)
@@ -55,7 +72,7 @@ export class status extends plugin {
   count() {
     const cmd = {
       msg: this.e.msg
-        .replace(/^#(状态|统计)/, "")
+        .replace(/^#云崽(状态|统计)/, "")
         .trim()
         .split(" "),
     }
